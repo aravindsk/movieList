@@ -216,6 +216,7 @@ def findMovieNameByDuration (movieName,movieDuration):
 		if findMovieInAKAS(movieName,movieDuration):
 			#check if tru. git comment
 			#second test
+			#third test
 			return True
 	return False
 
