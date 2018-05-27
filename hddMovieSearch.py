@@ -214,6 +214,7 @@ def findMovieNameByDuration (movieName,movieDuration):
 			# 				print('runtimeMinutes: '+basicMovieLine[7])
 			# 				return True 
 		if findMovieInAKAS(movieName,movieDuration):
+			#check if tru. git comment
 			return True
 	return False
 
