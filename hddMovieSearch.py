@@ -1,5 +1,6 @@
 from os import walk
 from fuzzywuzzy import fuzz
+from time import gmtime, strftime
 import re
 import csv
 import subprocess
@@ -21,7 +22,7 @@ def probeFileMetadata(vid_file_path,file_format):
     print('FILENAME :',vid_file_path)
     print('EXTENSION :',file_format)
     if type(vid_file_path) != str:
-        raise Exception('Gvie ffprobe a full file path of the video')
+        raise Exception('Give ffprobe a full file path of the video')
         return
 
     command = ["ffprobe",
@@ -76,46 +77,53 @@ normalCount = 0
 tConstCount = 0
 
 def findMovieInAKAS(movieName,movieDuration):
+	bestFuzzyScore = 0
+	bestMatch = None
+	global bestDurationDiff
+	bestDurationDiff = 10000
+	matchList= dict()
 	with open('/home/sk/coding/imdb/akas_data.tsv', newline='') as movieListFile:
 		print("calling findMovieInAKAS for "+str(movieName)+":"+str(movieDuration))
 		processedList =[]
 		movieList = csv.reader(movieListFile, delimiter='\t', quotechar='|')
 		next(movieList)
 		for movieLine in movieList:
-	#			if movieLine[7]:
-				#if int(line[1])>1:
-					#if movieLine[0] not in processedList:
-					#if movieLine[1]=='1':
-					#processedList.append(movieLine[0])
-					
-	#		movieName = 'faces places'
-			#if movieLine[2]== '3 Iron': #movieLine[2]== 'Thenmavin Kombath' or movieLine[2]== 'Swades' or movieLine[2]== 'Avengers: Infinity War':
 			if fuzz.ratio(movieName, movieLine[2]) > 80:
-
-				print("fuzz.ratio:"+str(fuzz.ratio(movieName, movieLine[2])))
+				fuzzyScore = fuzz.ratio(movieName, movieLine[2])
+				# print("fuzz.ratio:"+str(fuzzyScore))
 				processedList.append(movieLine[0])
-				print(int(movieLine[0][2:]))
+				#print(int(movieLine[0][2:]))
 				#db.collection(u'imdb_akas').document(movieLine[0]).set(movieLineDetails)
-				print('------------BEGINNING-----------')
-				print('Movie name: '+movieLine[2])
-				print('titleId: '+movieLine[0])
-				print('ordering: '+movieLine[1])
-				print('title: '+movieLine[2])
-				print('region: '+movieLine[3])
-				print('language: '+movieLine[4])
-				print('types: '+movieLine[5])
-				print('attributes: '+movieLine[6])
-				print('isOriginalTitle: '+movieLine[7])
+
+				# print('Movie name: '+movieLine[2])
+				# print('titleId: '+movieLine[0])
+				# print('ordering: '+movieLine[1])
+				# print('title: '+movieLine[2])
+				# print('region: '+movieLine[3])
+				# print('language: '+movieLine[4])
+				# print('types: '+movieLine[5])
+				# print('attributes: '+movieLine[6])
+				# print('isOriginalTitle: '+movieLine[7])
 				tconst=movieLine[0]
-				if findMovieNameByTconst(tconst,movieDuration):
-					print("FOUND IN findMovieNameByTconst(None,tconst,movieDuration):"+str(tconst)+":"+str(movieDuration))
-					return True
-				else:
-					print("NOT FOUND in findMovieInAKAS")
-					return False
+				if fuzzyScore>=bestFuzzyScore:
+						bestFuzzyScore=fuzzyScore
+						#matchList[tconst]=findMovieNameByTconst(tconst,movieDuration,fuzzyScore)
+						temp=findMovieNameByTconst(tconst,movieDuration,fuzzyScore)
+						if temp is not None:
+							bestMatch = temp
 
+	print("--------BEST FOUND MATCHES--------")
+	#print(matchList)
+	if bestMatch is not None:
+		print(bestMatch)
+		return True
+	else:
+		print("NOT FOUND")
+		return False
 
-def findMovieNameByTconst (movieTconst,movieDuration):
+bestDurationDiff =10000
+def findMovieNameByTconst (movieTconst,movieDuration,fuzzyScore):
+	global bestDurationDiff
 	global fuzzyCount
 	global normalCount
 	global tConstCount
@@ -129,16 +137,40 @@ def findMovieNameByTconst (movieTconst,movieDuration):
 				#DO NOT check for movie duration in tConst match
 				# if is_number(basicMovieLine[7]):
 				# 	if abs(movieDuration - int(basicMovieLine[7]))<10 :
-						print("PERFECT tConst MATCH")
-						print(basicMovieLine[2])
-						print(basicMovieLine[3])
+
+
+						durationDiff=1000
+						# print("PERFECT tConst MATCH")
+						# print(basicMovieLine[2])
+						# print(basicMovieLine[3])
 						# print(fuzz.ratio(movieName,basicMovieLine[3]))
 						tConstCount = tConstCount+1
-						print('originalTitle: '+basicMovieLine[3])
-						# print('isAdult: '+basicMovieLine[4])
-						print('startYear: '+basicMovieLine[5])
-						print('runtimeMinutes: '+basicMovieLine[7])
-						return True
+						# print('originalTitle: '+basicMovieLine[3])
+						# # print('isAdult: '+basicMovieLine[4])
+						# print('startYear: '+basicMovieLine[5])
+						# print('runtimeMinutes: '+basicMovieLine[7])
+						if is_number(basicMovieLine[7]):
+							durationDiff = abs(movieDuration - int(basicMovieLine[7]))
+						
+						if durationDiff<=bestDurationDiff:
+							bestDurationDiff=durationDiff
+							tConstDetails = {
+							'tConst':basicMovieLine[0],
+							'titleType':basicMovieLine[1],
+							'primaryTitle':basicMovieLine[2],
+							'originalTitle':basicMovieLine[3],
+							'isAdult':basicMovieLine[4],
+							'startYear':basicMovieLine[5],
+							'endYear':basicMovieLine[6],
+							'runtimeMinutes':basicMovieLine[7],
+							'genres':basicMovieLine[8],
+							'fuzzyScore':fuzzyScore,
+							'durationDiff':durationDiff,
+							}
+
+							return tConstDetails
+						else:
+							return None
 
 def findMovieNameByDuration (movieName,movieDuration):
 	global fuzzyCount
@@ -152,67 +184,38 @@ def findMovieNameByDuration (movieName,movieDuration):
 		#	basicMovieListPointer = basicMovieListPointer+1
 			#Best match condition as of 12:00,May 28
 			#fuzzy search basic name
-
-			if fuzz.ratio(movieName,basicMovieLine[3]) > 95:
+			fuzzyScore =fuzz.ratio(movieName,basicMovieLine[3])
+			if fuzzyScore > 95:
 				#check for movie duration
 				if is_number(basicMovieLine[7]):
-					if abs(movieDuration - int(basicMovieLine[7]))<10 :
-						print("PERFECT FUZZY name MATCH with duration")
-						print("--------fuzz.ratio---------")
-						print(movieName)
-						print(basicMovieLine[3])
-						print(fuzz.ratio(movieName,basicMovieLine[3]))
+					durationDiff=abs(movieDuration - int(basicMovieLine[7]))
+					if durationDiff<10 :
 						fuzzyCount = fuzzyCount+1
-						print('originalTitle: '+basicMovieLine[3])
-						# print('isAdult: '+basicMovieLine[4])
-						print('startYear: '+basicMovieLine[5])
-						print('runtimeMinutes: '+basicMovieLine[7])
+						# print("PERFECT FUZZY name MATCH with duration")
+						# print("--------fuzz.ratio---------")
+						# print(movieName)
+						# print(basicMovieLine[3])
+						# print(fuzz.ratio(movieName,basicMovieLine[3]))
+						# print('originalTitle: '+basicMovieLine[3])
+						# # print('isAdult: '+basicMovieLine[4])
+						# print('startYear: '+basicMovieLine[5])
+						# print('runtimeMinutes: '+basicMovieLine[7])
+						basicsDetails={
+							'tConst':basicMovieLine[0],
+							'titleType':basicMovieLine[1],
+							'primaryTitle':basicMovieLine[2],
+							'originalTitle':basicMovieLine[3],
+							'isAdult':basicMovieLine[4],
+							'startYear':basicMovieLine[5],
+							'endYear':basicMovieLine[6],
+							'runtimeMinutes':basicMovieLine[7],
+							'genres':basicMovieLine[8],
+							'fuzzyScore':fuzzyScore,
+							'durationDiff':durationDiff,
+							}
+						print (basicsDetails)
 						return True
 
-				# if fuzz.partial_ratio(movieName,basicMovieLine[3]) > 96:
-				# 	print("--------fuzz.partial_ratio---------")
-				# 	print(movieName)
-				# 	print(basicMovieLine[3])
-				# 	print(fuzz.partial_ratio(movieName,basicMovieLine[3]))
-
-				# elif basicMovieLine[3]==movieName:
-				# 	if is_number(basicMovieLine[7]):
-				# 	 if abs(movieDuration - int(basicMovieLine[7]))<10: # and int(movieYear[0]) == int(basicMovieLine[5]): # and basicMovieLine[5]==movieYear:
-				# 			print("PERFECT BASIC NAME MATCH")
-				# 	#		print(basicMovieListPointer)
-				# 			# print('primaryTitle : '+basicMovieLine[3]+'('+basicMovieLine[5]+')')
-				# 			# print('tconst: '+basicMovieLine[0])
-				# 			# print('titleType: '+basicMovieLine[1])
-				# 			# print('primaryTitle: '+basicMovieLine[2])
-				# 			print('originalTitle: '+basicMovieLine[3])
-				# 			# print('isAdult: '+basicMovieLine[4])
-				# 			print('startYear: '+basicMovieLine[5])
-				# 			# print('endYear: '+basicMovieLine[6])
-				# 			print('runtimeMinutes: '+basicMovieLine[7])
-				# 			# print('genres: '+basicMovieLine[8])
-				# 			print('------------ENDING-----------')
-				# 			normalCount= normalCount+1
-				# 			return True
-
-			# elif movieTconst is not None:
-			# 	if findMovieInAKAS(movieName,movieDuration):
-			# 		return True
-			# else:
-			# 	if movieTconst == basicMovieLine[0]:
-			# 		#check for movie duration
-			# 		if is_number(basicMovieLine[7]):
-			# 			if abs(movieDuration - int(basicMovieLine[7]))<10 :
-			# 				print("PERFECT FUZZY tConst MATCH with duration")
-			# 				print("--------fuzz.ratio---------")
-			# 				print(movieName)
-			# 				print(basicMovieLine[3])
-			# 				print(fuzz.ratio(movieName,basicMovieLine[3]))
-			# 				fuzzyCount = fuzzyCount+1
-			# 				print('originalTitle: '+basicMovieLine[3])
-			# 				# print('isAdult: '+basicMovieLine[4])
-			# 				print('startYear: '+basicMovieLine[5])
-			# 				print('runtimeMinutes: '+basicMovieLine[7])
-			# 				return True 
 		if findMovieInAKAS(movieName,movieDuration):
 			#check if tru. git comment
 			#second test
@@ -221,7 +224,7 @@ def findMovieNameByDuration (movieName,movieDuration):
 	return False
 
 
-pathList = ['/media/sk/WD_Blue01/Movies/World']#,'/media/sk/WD_Blue01/Movies','/media/sk/WD_others/Movies','/media/sk/WD_movies']
+pathList = ['/media/sk/WD_movies/Foreign'] #['/media/sk/WD_Blue01/Movies/World']#,'/media/sk/WD_Blue01/Movies','/media/sk/WD_others/Movies','/media/sk/WD_movies']
 
 for mypath in pathList:
 	print(mypath)
