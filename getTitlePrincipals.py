@@ -3,6 +3,8 @@ import json
 import datetime
 from time import gmtime, strftime
 
+from getNameBasics import fnGetNameBasics
+from firebaseWriteTitlePrincipals import fnFBWriteTitlePrincipals
 jsonTitlePrincipals = {}  
 jsonTitlePrincipals['tconst'] = []
 
@@ -12,9 +14,9 @@ def findTitlePrincipals (tConst):
 		principalsList = csv.reader(titlePrincipalsListFile, delimiter='\t', quotechar='|')
 		for principalsLine in principalsList:
 			if principalsLine[0]==tConst:	
-				print('nconst:'+principalsLine[2])
-				print('job:'+principalsLine[3])
-				print('characters:'+principalsLine[4])
+				# print('nconst:'+principalsLine[2])
+				# print('job:'+principalsLine[3])
+				# print('characters:'+principalsLine[4])
 				principalsDetails = {
 							'tconst':principalsLine[0],
 							'ordering':principalsLine[1],
@@ -26,25 +28,27 @@ def findTitlePrincipals (tConst):
 				jsonTitlePrincipals['tconst'].append(principalsDetails)
 	return True
 
-
+def fnGetTitlePrincipals(jsonTitleBasicsFileName):
 #read jsonTitleBasics and get title.cre
-jsonTitleBasicsFileName='datadump/jsonTitleBasics2018_05_28_04_55_40.json'
-print('data from file:'+jsonTitleBasicsFileName)
-with open(jsonTitleBasicsFileName) as json_TitleBasics:  
-    data = json.load(json_TitleBasics)
-    for p in data['tconst']:
-        print('tconst: ' + p['tconst'])
-        print('originalTitle: ' + p['originalTitle'])
-        tconst = p['tconst']
-        findTitlePrincipals(tconst)
-        #titlePrincipalsDetails = findTitlePrincipals(tconst)
-        #print(titleCrewDetails)
-        
+#jsonTitleBasicsFileName='datadump/jsonTitleBasics2018_05_28_04_55_40.json'
+	print('data from file:'+jsonTitleBasicsFileName)
+	with open(jsonTitleBasicsFileName) as json_TitleBasics:  
+	    data = json.load(json_TitleBasics)
+	    for p in data['tconst']:
+	        # print('tconst: ' + p['tconst'])
+	        # print('originalTitle: ' + p['originalTitle'])
+	        tconst = p['tconst']
+	        findTitlePrincipals(tconst)
+	        #titlePrincipalsDetails = findTitlePrincipals(tconst)
+	        #print(titleCrewDetails)
+	        
 
 
-print("JSON title basics details")
-print(jsonTitlePrincipals)
-timeStamp = strftime("%Y_%m_%d_%H_%M", gmtime())
-jsonTitlePrincipalsFileName = 'datadump/jsonTitlePrincipals.json'
-with open(jsonTitlePrincipalsFileName, 'w') as outfile:  
-	json.dump(jsonTitlePrincipals, outfile)
+	# print("JSON title basics details")
+	# print(jsonTitlePrincipals)
+	timeStamp = strftime("%Y_%m_%d_%H_%M", gmtime())
+	jsonTitlePrincipalsFileName = 'datadump/jsonTitlePrincipals'+str(timeStamp)+'.json'
+	with open(jsonTitlePrincipalsFileName, 'w') as outfile:  
+		json.dump(jsonTitlePrincipals, outfile)
+	fnFBWriteTitlePrincipals(jsonTitlePrincipalsFileName)
+	fnGetNameBasics(jsonTitlePrincipalsFileName)

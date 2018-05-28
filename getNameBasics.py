@@ -3,6 +3,8 @@ import json
 import datetime
 from time import gmtime, strftime
 
+from firebaseWriteNameBasics import fnFBWriteNameBasics
+
 jsonNameBasics = {}  
 jsonNameBasics['nconst'] = []
 
@@ -23,32 +25,42 @@ def findNameBasics (nConst):
 							}
 	return nameBasicsDetails
 
-#read jsonTitleBasics and get title.cre
-jsonTitleCrewFileName='datadump/jsonTitleCrew2018_05_28_05_17.json'
-print('data from file:'+jsonTitleCrewFileName)
-with open(jsonTitleCrewFileName) as json_CrewFile:  
-	data = json.load(json_CrewFile)
-	for p in data['tconst']:
-		print('directors: ' + p['directors'])
-		directorsnConstList = p['directors'].split(",")	
-		for directorsnconst in directorsnConstList:
-			print(directorsnconst)
-			nameBasicsDetails = findNameBasics(directorsnconst)
-			jsonNameBasics['nconst'].append(nameBasicsDetails)
+def fnGetNameBasics(jsonTitleCrewFileName):
+	#read jsonTitleBasics and get title.cre
+	#jsonTitleCrewFileName='datadump/jsonTitleCrew2018_05_28_05_17.json'
+	print('data from file:'+jsonTitleCrewFileName)
+	with open(jsonTitleCrewFileName) as json_CrewFile:  
+		data = json.load(json_CrewFile)
+		for p in data['tconst']:
+			if 'directors' in p:
+				# print('directors: ' + p['directors'])
+				directorsnConstList = p['directors'].split(",")	
+				for directorsnconst in directorsnConstList:
+					# print(directorsnconst)
+					nameBasicsDetails = findNameBasics(directorsnconst)
+					jsonNameBasics['nconst'].append(nameBasicsDetails)
+			if 'writers' in p:
+				# print('writers: ' + p['writers'])        
+				writersnConstList = p['writers'].split(",")	
+				for writersnconst in writersnConstList:
+					# print(writersnconst)
+					nameBasicsDetails = findNameBasics(writersnconst)
+					jsonNameBasics['nconst'].append(nameBasicsDetails)
+			if 'nconst' in p:
+				# print('nconst from Title principals: ' + p['nconst'])        
+				nConstList = p['nconst'].split(",")	
+				for writersnconst in nConstList:
+					# print(writersnconst)
+					nameBasicsDetails = findNameBasics(writersnconst)
+					jsonNameBasics['nconst'].append(nameBasicsDetails)
 
-		print('writers: ' + p['writers'])        
-		writersnConstList = p['writers'].split(",")	
-		for writersnconst in writersnConstList:
-			print(writersnconst)
-			nameBasicsDetails = findNameBasics(writersnconst)
-			jsonNameBasics['nconst'].append(nameBasicsDetails)
 
 
 
-
-print("JSON name basics details")
-print(jsonNameBasics)
-timeStamp = strftime("%Y_%m_%d_%H_%M", gmtime())
-jsonNameBasicsFileName = 'datadump/jsonNameBasics'+str(timeStamp)+'.json'
-with open(jsonNameBasicsFileName, 'w') as outfile:  
-	json.dump(jsonNameBasics, outfile)
+	# print("JSON name basics details")
+	# print(jsonNameBasics)
+	timeStamp = strftime("%Y_%m_%d_%H_%M", gmtime())
+	jsonNameBasicsFileName = 'datadump/jsonNameBasics'+str(timeStamp)+'.json'
+	with open(jsonNameBasicsFileName, 'w') as outfile:  
+		json.dump(jsonNameBasics, outfile)
+	fnFBWriteNameBasics(jsonNameBasicsFileName)

@@ -6,6 +6,30 @@ import csv
 import subprocess
 import subprocess32 as sp
 import json
+import datetime
+
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
+cred = credentials.Certificate('/home/sk/coding/imdb/firebase/watchedmoviedb-448c0352da72.json')
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+from getTitleCrew import fnGetTitleCrew
+from getTitlePrincipals import fnGetTitlePrincipals
+from firebaseWriteTitleBasics import fnFBWriteTitleBasics
+
+
+
+
+fuzzyCount = 0
+normalCount = 0
+tConstCount = 0
+bestDurationDiff =10000
+
+jsonTitleBasics = {}  
+jsonTitleBasics['tconst'] = []
 
 def is_number(s):
     try:
@@ -69,12 +93,7 @@ def filenameCleanup(inputFilename):
 	return result
 
 
-    	
-
-
-fuzzyCount = 0
-normalCount = 0
-tConstCount = 0
+	
 
 def findMovieInAKAS(movieName,movieDuration):
 	bestFuzzyScore = 0
@@ -82,7 +101,7 @@ def findMovieInAKAS(movieName,movieDuration):
 	global bestDurationDiff
 	bestDurationDiff = 10000
 	matchList= dict()
-	with open('/home/sk/coding/imdb/akas_data.tsv', newline='') as movieListFile:
+	with open('/home/sk/coding/imdb/title_akas.tsv', newline='') as movieListFile:
 		print("calling findMovieInAKAS for "+str(movieName)+":"+str(movieDuration))
 		processedList =[]
 		movieList = csv.reader(movieListFile, delimiter='\t', quotechar='|')
@@ -116,19 +135,20 @@ def findMovieInAKAS(movieName,movieDuration):
 	#print(matchList)
 	if bestMatch is not None:
 		print(bestMatch)
+		jsonTitleBasics['tconst'].append(bestMatch)
 		return True
 	else:
 		print("NOT FOUND")
 		return False
 
-bestDurationDiff =10000
+
 def findMovieNameByTconst (movieTconst,movieDuration,fuzzyScore):
 	global bestDurationDiff
 	global fuzzyCount
 	global normalCount
 	global tConstCount
 	print('Function findMovieNameByTconst call for:'+str(movieTconst))#+ str(movieYear[0]))
-	with open('/home/sk/coding/imdb/basics_data.tsv', newline='') as basicMovieListFile:
+	with open('/home/sk/coding/imdb/title_basics.tsv', newline='') as basicMovieListFile:
 		basicMovieList2 = csv.reader(basicMovieListFile, delimiter='\t', quotechar='|')
 		#for x in range(0, basicMovieListPointer): 
 		#	next(basicMovieList)
@@ -155,7 +175,7 @@ def findMovieNameByTconst (movieTconst,movieDuration,fuzzyScore):
 						if durationDiff<=bestDurationDiff:
 							bestDurationDiff=durationDiff
 							tConstDetails = {
-							'tConst':basicMovieLine[0],
+							'tconst':basicMovieLine[0],
 							'titleType':basicMovieLine[1],
 							'primaryTitle':basicMovieLine[2],
 							'originalTitle':basicMovieLine[3],
@@ -166,6 +186,7 @@ def findMovieNameByTconst (movieTconst,movieDuration,fuzzyScore):
 							'genres':basicMovieLine[8],
 							'fuzzyScore':fuzzyScore,
 							'durationDiff':durationDiff,
+							'dataFindTime':strftime("%Y-%m-%d %H:%M:%S", gmtime())
 							}
 
 							return tConstDetails
@@ -176,7 +197,7 @@ def findMovieNameByDuration (movieName,movieDuration):
 	global fuzzyCount
 	global normalCount
 	print('Function findMovieNameByDuration call for:'+str(movieName))#+ str(movieYear[0]))
-	with open('/home/sk/coding/imdb/basics_data.tsv', newline='') as basicMovieListFile:
+	with open('/home/sk/coding/imdb/title_basics.tsv', newline='') as basicMovieListFile:
 		basicMovieList = csv.reader(basicMovieListFile, delimiter='\t', quotechar='|')
 		#for x in range(0, basicMovieListPointer): 
 		#	next(basicMovieList)
@@ -201,7 +222,7 @@ def findMovieNameByDuration (movieName,movieDuration):
 						# print('startYear: '+basicMovieLine[5])
 						# print('runtimeMinutes: '+basicMovieLine[7])
 						basicsDetails={
-							'tConst':basicMovieLine[0],
+							'tconst':basicMovieLine[0],
 							'titleType':basicMovieLine[1],
 							'primaryTitle':basicMovieLine[2],
 							'originalTitle':basicMovieLine[3],
@@ -212,8 +233,10 @@ def findMovieNameByDuration (movieName,movieDuration):
 							'genres':basicMovieLine[8],
 							'fuzzyScore':fuzzyScore,
 							'durationDiff':durationDiff,
+							'dataFindTime':strftime("%Y-%m-%d %H:%M:%S", gmtime())
 							}
 						print (basicsDetails)
+						jsonTitleBasics['tconst'].append(basicsDetails)
 						return True
 
 		if findMovieInAKAS(movieName,movieDuration):
@@ -224,7 +247,7 @@ def findMovieNameByDuration (movieName,movieDuration):
 	return False
 
 
-pathList = ['/media/sk/WD_movies/Foreign'] #['/media/sk/WD_Blue01/Movies/World']#,'/media/sk/WD_Blue01/Movies','/media/sk/WD_others/Movies','/media/sk/WD_movies']
+pathList =['/media/sk/WD_Blue01/Movies/hddTraversalTest'] #['/media/sk/WD_Blue01/Movies/English']#,'/media/sk/WD_Blue01/Movies','/media/sk/WD_others/Movies','/media/sk/WD_movies']
 
 for mypath in pathList:
 	print(mypath)
@@ -239,7 +262,7 @@ mypath='/media/sk/WD_Blue01/Movies'
 
 #mypath='/home/sk/coding/foldertraversal'
 
-
+# this needs to be build into a function
 diskFilenames =[]
 notFoundList =[]
 foundList =[]
@@ -258,14 +281,20 @@ fileNameStopWords = ['webm', 'mkv','sfv', 'mp4','avi','dat','m4v','xvid',
 ,'sample'
 
 ]
-for mypath in pathList:
 
+timeStamp = strftime("%Y_%m_%d_%H_%M", gmtime())
+fileNameRunStats = 'datadump/run_stats_'+timeStamp+'.txt'
+with open(fileNameRunStats, 'a') as runStatsFile:  
+	runStatsFile.write('Run start time : '+strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+
+
+for mypath in pathList:
 	for (dirpath, dirnames, filenames) in walk(mypath):
 		#print("dirpath :"+str(dirpath))
 		#print("dirpath mov name :"+str(dirpath.split('/')[-1]))
 		#print("dirnames:"+str(dirnames))
 		#print("filenames:"+str(filenames))
-		
+
 		for filelist in filenames :
 			#print (filelist)
 			#print(filelist.split('.')[-1])
@@ -277,7 +306,7 @@ for mypath in pathList:
 				#print("FULL PATH :"+dirpath+'/'+filelist)
 				fullFilePath = dirpath+'/'+filelist
 				movieDuration = probeFileMetadata(fullFilePath,fileExtension)
-				print("FileRuntime:"+str(movieDuration))
+				# print("FileRuntime:"+str(movieDuration))
 				
 				
 				# #replace special characters from name
@@ -308,19 +337,41 @@ for mypath in pathList:
 					#if result not empty and already present in list
 					if(result!='' and ('result' in diskFilenames) == False):
 						diskFilenames.append(result)
+	#print run details
+	# print ("***PATH LOCATION : "+mypath)
+	# print("***FILE NAMES : "+str(diskFilenames))
+	# print("***NUMBER OF FILES : "+str(len(diskFilenames)))
+	# print("fuzzyCount:" +str(fuzzyCount))
+	# print("normalCount:" +str(normalCount))
+	# print("tConstCount:" +str(tConstCount))
+	# print('FOUND count:'+str(len(foundList)))
+	# print('NOT FOUND count:'+str(len(notFoundList)))
+	# print('NOT FOUND list:')
+	# print(notFoundList)
+	
+	with open(fileNameRunStats, 'a') as runStatsFile:  
+		runStatsFile.write(strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+		runStatsFile.write("\n***PATH LOCATION : "+mypath)
+		runStatsFile.write("\n***FILE NAMES : "+str(diskFilenames))
+		runStatsFile.write("\n***NUMBER OF FILES : "+str(len(diskFilenames)))
+		runStatsFile.write("\nfuzzyCount:" +str(fuzzyCount))
+		runStatsFile.write("\nnormalCount:" +str(normalCount))
+		runStatsFile.write("\ntConstCount:" +str(tConstCount))
+		runStatsFile.write('\nFOUND count:'+str(len(foundList)))
+		runStatsFile.write('\nNOT FOUND count:'+str(len(notFoundList)))
+		runStatsFile.write('\nNOT FOUND list:')
+		runStatsFile.write(str(notFoundList))
 
-	print ("***PATH LOCATION : "+mypath)
-	print("***FILE NAMES : "+str(diskFilenames))
-	print("***NUMBER OF FILES : "+str(len(diskFilenames)))
-	print("fuzzyCount:" +str(fuzzyCount))
-	print("normalCount:" +str(normalCount))
-	print("tConstCount:" +str(tConstCount))
-	# for movieName in diskFilenames:
+print("JSON title basics details")
+print(jsonTitleBasics)
 
-	# 	print(movieName)
-	print('FOUND count:'+str(len(foundList)))
-	print('NOT FOUND count:'+str(len(notFoundList)))
-	print('NOT FOUND list:')
-	print(notFoundList)
-		#findMovieName(movieName,100)
-#	findMovieName('Guardians Of The Galaxy')
+timeStamp = strftime("%Y_%m_%d_%H_%M", gmtime())
+jsonTitleBasicsFileName = 'datadump/jsonTitleBasics'+str(timeStamp)+'.json'
+with open(jsonTitleBasicsFileName, 'w') as outfile:  
+	json.dump(jsonTitleBasics, outfile)
+
+fnFBWriteTitleBasics(jsonTitleBasicsFileName)
+fnGetTitleCrew(jsonTitleBasicsFileName)
+fnGetTitlePrincipals(jsonTitleBasicsFileName)
+with open(fileNameRunStats, 'a') as runStatsFile:  
+			runStatsFile.write('Run end time : '+strftime("%Y-%m-%d %H:%M:%S", gmtime()))
