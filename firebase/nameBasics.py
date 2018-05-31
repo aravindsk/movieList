@@ -47,5 +47,4 @@ def getFbNameBasics(nconst):
 	docs = db.collection(u'name_basics').document(nconst)
 	doc = docs.get()
 	namebasics = NameBasics.from_dict(doc.to_dict())
-	# print(namebasics)
 	return(namebasics)

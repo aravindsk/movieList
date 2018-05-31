@@ -247,7 +247,7 @@ def findMovieNameByDuration (movieName,movieDuration):
 	return False
 
 
-pathList =['/media/sk/WD_Blue01/Movies/hddTraversalTest'] #['/media/sk/WD_Blue01/Movies/English']#,'/media/sk/WD_Blue01/Movies','/media/sk/WD_others/Movies','/media/sk/WD_movies']
+pathList =['/media/sk/WD_Blue01/Movies/Documentaries','/media/sk/WD_Blue01/Movies/Indian'] #['/media/sk/WD_Blue01/Movies/English']#,'/media/sk/WD_Blue01/Movies','/media/sk/WD_others/Movies','/media/sk/WD_movies']
 
 for mypath in pathList:
 	print(mypath)

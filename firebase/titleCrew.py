@@ -42,13 +42,18 @@ class TitleCrew(object):
 def getFbTitleCrew(tconst):
 	directorList=[]
 	writerList=[]
-	crewList=[]
+	crewList={}
 	docs = db.collection(u'title_crew').document(tconst)
 	doc = docs.get()
+
 	titlecrew = TitleCrew.from_dict(doc.to_dict())
+	print(titlecrew)
 	for directorNconst in titlecrew.directors.split(","):
 		directorList.append(getFbNameBasics(directorNconst))
+	
 	for writerNconst in titlecrew.writers.split(","):
 		writerList.append(getFbNameBasics(writerNconst))
-	crewList = directorList+writerList
+	crewList['directors'] = directorList
+	crewList['writers'] = writerList
+	# print(writerList)
 	return(crewList)

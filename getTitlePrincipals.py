@@ -21,8 +21,9 @@ def findTitlePrincipals (tConst):
 							'tconst':principalsLine[0],
 							'ordering':principalsLine[1],
 							'nconst':principalsLine[2],
-							'job':principalsLine[3],
-							'characters':principalsLine[4],
+							'category':principalsLine[3],
+							'job':principalsLine[4],
+							'characters':principalsLine[5],
 							'dataFindTime':strftime("%Y-%m-%d %H:%M:%S", gmtime())
 							}
 				jsonTitlePrincipals['tconst'].append(principalsDetails)

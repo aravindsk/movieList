@@ -55,6 +55,6 @@ def getFbTitlePrinicpals(tconst):
 	    # print(u'{} => {}'.format(doc.id, doc.to_dict()))
 	    titleprincipals = TitlePrincipals.from_dict(doc.to_dict())
 	    # lstTitlePrincipals.append(titleprincipals)
-	    print(titleprincipals)
+	    # print(titleprincipals)
 	    lstTitlePrincipals.append(getFbNameBasics(titleprincipals.nconst))
 	return(lstTitlePrincipals)

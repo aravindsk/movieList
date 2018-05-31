@@ -4,7 +4,7 @@ from firebase_admin import firestore
 
 import google.cloud.exceptions
 
-from titleCrew import getFbTitleCrew
+# from titleCrew import getTitleCrew
 # cred = credentials.Certificate('/home/sk/coding/imdb/firebase/watchedmoviedb-448c0352da72.json')
 # firebase_admin.initialize_app(cred)
 db = firestore.client()
@@ -53,5 +53,6 @@ def getFbTitleBasics(tconst):
 	docs = db.collection(u'title_basics').document(tconst)
 	doc = docs.get()
 	titleBasics = TitleBasics.from_dict(doc.to_dict())
-	print(titleBasics)
-	return(titleBasics)
+	# print(titleBasics)
+	titleDict = titleBasics.to_dict()
+	return titleDict

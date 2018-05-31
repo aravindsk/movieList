@@ -14,9 +14,56 @@ from titleBasics import getFbTitleBasics
 from titleCrew import getFbTitleCrew
 from titlePrincipals import getFbTitlePrinicpals
 
+
+dictFullMovie={}
+directors=[]
+writers=[]
+principalCast=[]
 # print('TITLE')
-# print(getFbTitleBasics(u'tt2763304'))
-# print('CREW')
-# print(getFbTitleCrew(u'tt2763304'))
+# titleBasics=getFbTitleBasics(u'tt2763304')
+# print(titleBasics)
+# dictFullMovie['titleBasics']=titleBasics
+# print(dictFullMovie)
+
+# crew = getFbTitleCrew(u'tt2763304')
+# print("crew")
+# print(crew)
+# print("crew['directors'][0].to_dict()")
+# directors = crew['directors'][0].to_dict()
+# dictFullMovie['directors']=directors
+
+# i=0
+# for j in crew['directors']:
+# 	print(crew['directors'][i].to_dict())
+# 	directors.append(crew['directors'][i].to_dict())
+# 	i=i+1
+# print('directors')
+# print(directors)
+# dictFullMovie['directors']=directors
+# # print("crew['writers']")
+# # print(crew['writers'])
+# i=0
+# for writerList in crew['writers']:
+# 	print(crew['writers'][i].to_dict())
+# 	writers.append(crew['writers'][i].to_dict())
+# 	i=i+1
+# print('writers')
+# print(writers)
+
+# dictFullMovie['writers']=writers
+# print (writers)
+
+# dictFullMovie['writers']=writers
+# print(dictFullMovie)
+
+#print(crew['directors'][0].to_dict()['primaryName'])
+# for dirList in crew['directors'][0].to_dict():
+# 	print(dirList)
 print('PRINCIPALS')
-print(getFbTitlePrinicpals(u'tt2763304'))
+principals = getFbTitlePrinicpals(u'tt2763304')
+i=0
+for priList in principals:
+	# print(priList.to_dict())
+	principalCast.append(priList.to_dict())
+	i=i+1
+print(principalCast)
