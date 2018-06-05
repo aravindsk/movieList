@@ -34,7 +34,7 @@ class TitleCrew(object):
       u'tconst': self.tconst,
       u'role': self.role,
       u'nconst': self.nconst,
-      u'categor#y': self.primaryName
+      u'primaryName': self.primaryName
     }
     return dest
   def __repr__(self):
