@@ -9,6 +9,7 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 basicMovieListPointer = 0
 
+#test commiting a new comment
 
 def findCrewName (crewnConst, crewType):
 	print(crewnConst)
